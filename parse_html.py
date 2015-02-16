@@ -7,14 +7,11 @@ Created on 2015年2月16日
 from lxml import etree
 import requests
 import json
-
-import sys 
-reload(sys) 
-sys.setdefaultencoding('utf-8')
+import codecs
 
 
 def start():
-    re_file = open("parse_html.json", "wb")
+    re_file = codecs.open("parse_html.json", "wb", encoding="utf-8")
     result = requests.get("http://hao0610.sinaapp.com")
     # 将内容转换为小写, 并转码为utf-8
     page = etree.HTML(result.content.lower().decode('utf-8', 'ignore'))
@@ -23,7 +20,7 @@ def start():
     for p in pages:
         # 获取 <a></a>之间的数据, 和href的数据
         line = json.dumps({"name": p.text, "href": p.attrib["href"]}) + "\n"
-        re_file.write(line.decode("unicode_escape", 'ignore'))
+        re_file.write(line.decode("unicode_escape"))
         
     re_file.close()
     print "完成"
