@@ -22,11 +22,10 @@ headers = {
 url = "http://my.b2b.hc360.com/my/turbine/action/business.BusinAjaxAction"
 attr_url = "http://my.b2b.hc360.com/my/turbine/template/corcenter%2Cbusiness%2Cstepsupplysecond.html"
 
-global hc_category
 hc_category = codecs.open("hc_category.json", "wb", encoding="utf-8")
-global hc_category_attr
 hc_category_attr = codecs.open("hc_category_attr.json", "wb", encoding="utf-8")
 lock = threading.Lock()
+
 
 def demo():
     begin = time.time()
@@ -38,7 +37,7 @@ def demo():
         line = json.dumps({"sid":sid, "name":name, "pid":"0", "cid":"0"}) + "\n"
         hc_category.write(line.decode("unicode_escape"))
         
-        t = threading.Thread(target=get_category, name=data["sid"], args=(name, sid))
+        t = threading.Thread(target=get_category, name=data["sid"], args=(sid, ))
         threads.append(t)
         t.start()
         # get_category(name, sid)
@@ -66,7 +65,7 @@ def get_all_id():
     return datas
 
 
-def get_category(name, pid, cid="0"):
+def get_category(pid):
     data = {'path': 'next', 'sid': pid}
     result = requests.post(url, data=data, headers=headers)
     re_content = json.loads(result.content)
@@ -82,7 +81,7 @@ def get_category(name, pid, cid="0"):
         lock.release()
         if data["hasNext"] == "1":  # 有下一级
             time.sleep(1)
-            get_category(name, sid, cid)
+            get_category(sid)
         elif data["hasNext"] == "0":
             time.sleep(1)
             get_category_attr(sid, cid)
