@@ -22,6 +22,7 @@ def demo():
     begin = time.time()
     threads = []
     urls = get_urls()
+    driver = webdriver.Firefox()
     for url in urls:
         '''
         result = requests.get(url, headers=headers)
@@ -29,12 +30,19 @@ def demo():
         print soup
         print soup.find_all(class_="pic-box-inner")
         '''
-        c = webdriver.Firefox()
-        c.get(url)
-        comment = c.find_element_by_id('media_comment')
-        count = comment.find_element_by_class_name('f_red')
-        print count.text
+        driver.get(url)
+        print driver
+        #comment = driver.find_element_by_xpath("//div[contains(@id, 'mainsrp-itemlist')]//div[contains(@class, 'item')]")
+        comments = driver.find_elements_by_css_selector("div#mainsrp-itemlist div.item")
+        for item in comments:
+            print item.text
+            print "....................................................."
+            #print item.find_element_by_xpath("//div[contains(@class, 'pic-box-inner')]//a[contains(@class, 'pic-link J_U2IStat J_ItemPicA')]//img[contains(@class, 'J_ItemPic img')]").get_attribute("src")
         break
+
+    driver.close()
+    # driver.quit()
+
     for t in threads:
         t.join()
 
