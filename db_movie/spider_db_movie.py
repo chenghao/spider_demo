@@ -10,16 +10,22 @@ import codecs
 import threading
 import time
 
+import gevent
+from gevent.threadpool import ThreadPool
+#from eventlet import GreenPool
 
+
+pool = ThreadPool(20)
+#pool = GreenPool(20)
 headers = {
     'Host': 'movie.douban.com',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.91 Safari/537.36',
+    'User-Agent': '	Mozilla/5.0 (Windows NT 6.1; WOW64; rv:35.0) Gecko/20100101 Firefox/35.0',
     'Referer': 'www.douban.com',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3',
     'Connection': 'keep-alive',
-    'Cookie': 'bid="t+vhk8fr4C8"; ap=1; ll="118318"; _pk_ref.100001.4cf6=%5B%22%22%2C%22%22%2C1424048779%2C%22http%3A%2F%2Fwww.tuicool.com%2Farticles%2FB3yU32j%22%5D; _pk_id.100001.4cf6=01f40bbbf01eff44.1423900418.4.1424048779.1423993192.; __utma=30149280.596929389.1423643421.1423991649.1424048779.5; __utmc=30149280; __utmz=30149280.1423991649.4.4.utmcsr=tuicool.com|utmccn=(referral)|utmcmd=referral|utmcct=/articles/B3yU32j; __utma=223695111.634150975.1423900418.1423991649.1424048779.4; __utmc=223695111; __utmz=223695111.1423991649.3.3.utmcsr=tuicool.com|utmccn=(referral)|utmcmd=referral|utmcct=/articles/B3yU32j',
+    'Cookie': 'bid="W/D44gE8ksY"; __utma=30149280.1878984429.1423642610.1425614421.1425631983.5; __utmz=30149280.1423642610.1.1.utmcsr=baidu|utmccn=(organic)|utmcmd=organic|utmctr=python%20%B0%B2%D7%B0%20mysqldb; _pk_id.100001.4cf6=ec35457a702f6270.1423992981.3.1425631982.1424050844.; __utma=223695111.716008886.1423992981.1424050029.1425631983.3; __utmz=223695111.1423992981.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ll="118318"; __utmc=30149280; ap=1; _pk_ses.100001.4cf6=*; __utmb=30149280.1.10.1425631983; __utmt_douban=1; __utmb=223695111.0.10.1425631983; __utmc=223695111',
 }
 
 url = "http://movie.douban.com/j/search_subjects"
@@ -27,20 +33,24 @@ url_detail = "http://movie.douban.com/j/subject_abstract?subject_id=%s"
 
 db_movie = codecs.open("db_movie.json", "wb", encoding="utf-8")
 db_movie_detail = codecs.open("db_movie_detail.json", "wb", encoding="utf-8")
-lock = threading.Lock()
 
 
 def demo():
     begin = time.time()
-    threads = []
+    #threads = []
     limit = 10  # 0 - 9
     for i in xrange(limit):
-        t = threading.Thread(target=get_movie, name=str(i + 1), args=(url, i * 20))
-        threads.append(t)
-        t.start()
+        #t = threading.Thread(target=get_movie, name=str(i + 1), args=(url, i * 20))
+        #threads.append(t)
+        #t.start()
 
-    for t in threads:
-        t.join()
+        pool.spawn(get_movie, url, i * 20)
+
+    #pool.waitall()
+    gevent.wait()
+
+    #for t in threads:
+    #    t.join()
 
     print "Elapsed time: %s" % (time.time() - begin)
 
@@ -63,10 +73,8 @@ def get_movie(url, page_start):
         movie_url = data["url"]
         cover = data["cover"]  # 封面
         movie_id = data["id"]
-        # lock.acquire()
         line = json.dumps({"id": movie_id, "rate": rate, "title": title, "url": movie_url, "cover": cover}) + "\n"
         db_movie.write(line.decode("unicode_escape"))
-        # lock.release()
         get_movie_detail(url_detail % movie_id)
 
         time.sleep(1)
@@ -83,11 +91,9 @@ def get_movie_detail(url):
     actors = ",".join(subject["actors"])  # 演员
     region = subject["region"]  # 地区
     types = ",".join(subject["types"])  # 电影类型
-    # lock.acquire()
     line = json.dumps({"id": movie_id, "directors": directors, "duration": duration, "actors": actors, "region": region,
                        "types": types}) + "\n"
     db_movie_detail.write(line.decode("unicode_escape"))
-    # lock.release()
 
 
 demo()
