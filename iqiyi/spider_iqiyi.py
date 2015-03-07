@@ -8,14 +8,14 @@ import threading
 import time
 from bs4 import BeautifulSoup
 
-import gevent
-from gevent.threadpool import ThreadPool
+# import gevent
+#from gevent.threadpool import ThreadPool
 
-#from eventlet import GreenPool
+from eventlet import GreenPool
 
 
-pool = ThreadPool(20)
-#pool = GreenPool(20)
+#pool = ThreadPool(20)
+pool = GreenPool(20)
 
 headers = {
     'Host': 'list.iqiyi.com',
@@ -42,8 +42,8 @@ def demo():
 
         pool.spawn(get_iqiyi, url, i + 1)
 
-    #pool.waitall()
-    gevent.wait()
+    pool.waitall()
+    #gevent.wait()
 
     #for t in threads:
     #    t.join()
@@ -52,14 +52,13 @@ def demo():
 
     iqiyi.close()
 
-    # get_movie(url, 0)
-
 
 def get_iqiyi(url, page_start):
     result = requests.get(url % page_start, headers=headers)
     soup = BeautifulSoup(result.content)
     ul = soup.find_all(class_="site-piclist site-piclist-180236 site-piclist-auto")
     lis = ul[0].find_all("li")
+
     threads = []
     for li in lis:
         t = threading.Thread(target=save_iqiyi, args=(li, ))
