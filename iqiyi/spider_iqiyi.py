@@ -43,6 +43,8 @@ def demo():
         #t.start()
 
         pool.spawn(get_iqiyi, url, i + 1)
+    #threads = [pool.spawn(get_iqiyi, url, i + 1) for i in xrange(limit)]
+    #gevent.joinall(threads)
 
     pool.waitall()
     #gevent.wait()
