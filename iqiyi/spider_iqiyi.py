@@ -1,17 +1,19 @@
 # coding:utf-8
 __author__ = 'chenghao'
 
-import requests
+#import requests
 import json
 import codecs
 import threading
 import time
 from bs4 import BeautifulSoup
 
-# import gevent
+#import gevent
 #from gevent.threadpool import ThreadPool
 
+import eventlet
 from eventlet import GreenPool
+requests = eventlet.import_patched("requests")
 
 
 #pool = ThreadPool(20)
