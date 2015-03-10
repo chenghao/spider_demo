@@ -1,13 +1,19 @@
 # coding:utf-8
 __author__ = 'chenghao'
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
-import requests
 import codecs
 import json
 from bs4 import BeautifulSoup
-import threading
 import time
+from lxml import etree
 from selenium import webdriver
+import eventlet
+from eventlet import GreenPool
+
+pool = GreenPool()
 
 tb_url = """http://s.taobao.com/search?initiative_id=staobaoz_20120515&q=%E8%BF%9E%E8%A1%A3%E8%A3%99+%E5%A4%8F&bcoffset=-3&s="""
 
@@ -19,35 +25,36 @@ headers = {
 
 
 def demo():
+    browser = webdriver.Firefox()
+
     begin = time.time()
-    threads = []
     urls = get_urls()
-    driver = webdriver.Firefox()
     for url in urls:
-        '''
-        result = requests.get(url, headers=headers)
-        soup = BeautifulSoup(result.content)
-        print soup
-        print soup.find_all(class_="pic-box-inner")
-        '''
-        driver.get(url)
-        print driver
-        #comment = driver.find_element_by_xpath("//div[contains(@id, 'mainsrp-itemlist')]//div[contains(@class, 'item')]")
-        comments = driver.find_elements_by_css_selector("div#mainsrp-itemlist div.item")
-        for item in comments:
-            print item.text
-            print "....................................................."
-            #print item.find_element_by_xpath("//div[contains(@class, 'pic-box-inner')]//a[contains(@class, 'pic-link J_U2IStat J_ItemPicA')]//img[contains(@class, 'J_ItemPic img')]").get_attribute("src")
+        pool.spawn_n(parse_page, url, browser)
         break
 
-    driver.close()
+    pool.waitall()
+    browser.close()
     # driver.quit()
-
-    for t in threads:
-        t.join()
 
     print "Elapsed time: %s" % (time.time() - begin)
 
+
+def parse_page(url, browser):
+    browser.get(url)
+    content = browser.page_source  # 获取网页源码
+    # 将内容转换为小写, 并转码为utf-8
+    page = etree.HTML(content.decode('utf-8', 'ignore'))
+    #pages = page.xpath("//div[contains(@id, 'J_itemlistCont')]//div[contains(@class, 'item  ')]")
+    #for item in pages:
+    #    print item.xpath("//div[contains(@class, 'pic-box J_MouseEneterLeave J_PicBox')]//div[contains(@class, 'pic')]//img[contains(@class, 'J_ItemPic img')]/text()")
+    items = page.xpath(u"//div[@id='J_itemlistCont']//div[@class='item  ']")
+    for item in items:
+        item_div = item.xpath(u"div[@class='pic-box J_MouseEneterLeave J_PicBox']//img[@class='J_ItemPic img']")[0].attrib["src"]
+        print item_div
+        #print etree.tostring(item_div)
+        #print item.xpath(u"div[contains(@class, 'pic-box J_MouseEneterLeave J_PicBox')]//div[contains(@class, 'pic')]//img[contains(@class, 'J_ItemPic img')]")
+        break
 
 def get_urls():
     urls = []
