@@ -17,7 +17,7 @@ requests = eventlet.import_patched("requests")
 
 
 #pool = ThreadPool(20)
-pool = GreenPool(20)
+pool = GreenPool(50)
 
 headers = {
     'Host': 'list.iqiyi.com',
@@ -63,6 +63,10 @@ def get_iqiyi(url, page_start):
     ul = soup.find_all(class_="site-piclist site-piclist-180236 site-piclist-auto")
     lis = ul[0].find_all("li")
 
+    for li in lis:
+        pool.spawn(save_iqiyi, li)
+
+    """
     threads = []
     for li in lis:
         t = threading.Thread(target=save_iqiyi, args=(li, ))
@@ -70,6 +74,7 @@ def get_iqiyi(url, page_start):
         t.start()
     for t in threads:
         t.join()
+    """
 
 
 def save_iqiyi(li):
