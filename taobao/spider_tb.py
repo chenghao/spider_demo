@@ -34,6 +34,7 @@ def parse_page(url, browser):
     content = browser.page_source  # 获取网页源码
     # 将内容转换为小写, 并转码为utf-8
     page = etree.HTML(content.decode('utf-8', 'ignore'))
+    # lxml中 / 表示下一级元素, // 表示下N级元素(包含下一级元素), 没有 /和// 表示当前元素的下一级元素
     items = page.xpath(u"//div[@id='J_itemlistCont']//div[@class='item  ']")
     for item in items:
         pool.spawn_n(save_data, item)
